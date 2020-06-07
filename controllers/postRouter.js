@@ -92,7 +92,7 @@ postRouter.delete('/:id', async (request, response) => {
 	response.status(204).end()
 })
 
-postRouter.put('/:id', async (request, response) => {
+postRouter.put('/:id', async (request, response, next) => {
 	const token = request.token
 	
 	if (!token)
@@ -100,8 +100,27 @@ postRouter.put('/:id', async (request, response) => {
 		return response.status(401).json({error: 'unauthorized access'})
 	}
 	
-	const post = await Post.findByIdAndUpdate(request.params.id, {likes: request.body.likes}, {new: true}).populate('user', {username: 1, id: 1})
-	response.json(post.toJSON())
+	try {
+		const post = await Post.findById(request.params.id)
+		
+		//Mongoose uses "getter" functions for all attributes
+		//Therefore, you need to call toObject() if you actually want to use it in spread operator
+		const updatedPost = {
+			...post.toObject(),
+			...request.body,
+			last_edited: new Date().toISOString()
+		}
+		
+		console.log(updatedPost)
+		
+		const savedPost = await Post.findOneAndReplace({_id: request.params.id}, updatedPost, {new: true})
+		console.log(savedPost)
+		response.status(200).json(savedPost.toJSON())
+	}
+	catch (e) {
+		console.log(e.message)
+		next(e)
+	}
 })
 
 postRouter.use('/:id/comments', commentRouter)
