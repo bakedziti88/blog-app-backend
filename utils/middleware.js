@@ -1,3 +1,5 @@
+const Post = require('../models/Post')
+
 const unknownEndpoint = (request, response) => {
 	response.status(404).send({error: 'Unknown endpoint'})
 }
@@ -33,4 +35,15 @@ const doNothing = (request, response, next) => {
 	next()
 }
 
-module.exports = {unknownEndpoint, errorHandler, getAuthorization, doNothing}
+const validatePost = async (request, response, next) => {
+	try {
+		const post = await Post.findById(request.params.id)
+	}
+	catch(e) {
+		console.log(e.message)
+		return response.status(404).json({error: 'Post does not exist'})
+	}
+	next()
+}
+
+module.exports = {unknownEndpoint, errorHandler, getAuthorization, doNothing, validatePost}

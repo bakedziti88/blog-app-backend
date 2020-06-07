@@ -25,12 +25,12 @@ mongoose.connect(config.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology:
 app.use(express.json())
 app.use(morgan('tiny'))
 app.use(middleware.getAuthorization)
-app.use(middleware.doNothing)
 
 app.use('/api/posts', postRouter)
 app.use('/api/users', userRouter)
 app.use('/api/login', loginRouter)
 
+app.use(middleware.errorHandler)
 app.use(middleware.unknownEndpoint)
 
 module.exports = app

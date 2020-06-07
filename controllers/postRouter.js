@@ -1,12 +1,18 @@
 const postRouter = require('express').Router()
+const commentRouter = require('./commentRouter')
+
 const jwt = require('jsonwebtoken')
+
 const logger = require('../utils/logger')
 
 const Post = require('../models/Post')
 const User = require('../models/User')
 
+
+
 postRouter.get('/', async (request, response) => {
 	const posts = await Post.find({}).populate('user', {username: 1, id: 1})
+		//.populate('comments')
 	response.json(posts.map(post => post.toJSON()))
 })
 
@@ -38,21 +44,26 @@ postRouter.post('/', async (request, response, next) => {
 	if (!decoded || !decoded.id) {
 		return response.status(401).json({error: 'invalid or missing token'})
 	}
-	
+	 
 	const user = await User.findById(decoded.id)
 	
 	const post = new Post({
 		title: body.title,
-		author: body.author,
-		url: body.url,
+		body: body.body,
 		user: decoded.id,
+		last_edited: null,
 		likes: 0
 	})
 	
-	let savedPost = await post.save()
-	user.posts = user.posts.concat(savedPost)
-	await user.save()
-	response.status(201).json(savedPost.toJSON())
+	try {
+		const savedPost = await post.save()
+		user.posts = user.posts.concat(savedPost)
+		await user.save()
+		response.status(201).json(savedPost.toJSON())
+	}
+	catch (e) {
+		next(e)
+	}
 })
 
 postRouter.delete('/:id', async (request, response) => {
@@ -77,7 +88,7 @@ postRouter.delete('/:id', async (request, response) => {
 		return response.status(401).json({error: 'unauthorized access'})
 	}
 	
-	await Post.findByIdAndDelete(request.params.id)
+	await post.deleteOne()
 	response.status(204).end()
 })
 
@@ -92,5 +103,7 @@ postRouter.put('/:id', async (request, response) => {
 	const post = await Post.findByIdAndUpdate(request.params.id, {likes: request.body.likes}, {new: true}).populate('user', {username: 1, id: 1})
 	response.json(post.toJSON())
 })
+
+postRouter.use('/:id/comments', commentRouter)
 
 module.exports = postRouter
