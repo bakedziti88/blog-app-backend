@@ -11,7 +11,7 @@ const User = require('../models/User')
 
 
 postRouter.get('/', async (request, response) => {
-	const posts = await Post.find({}).populate('user', {username: 1, id: 1})
+	const posts = await Post.find({}).populate('user', {username: 1, id: 1, name: 1})
 		//.populate('comments')
 	response.json(posts.map(post => post.toJSON()))
 })
