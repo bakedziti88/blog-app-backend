@@ -8,16 +8,16 @@ const logger = require('../utils/logger')
 const Post = require('../models/Post')
 const User = require('../models/User')
 
-
+postRouter.use('/:id/comments', commentRouter)
 
 postRouter.get('/', async (request, response) => {
 	const posts = await Post.find({}).populate('user', {username: 1, id: 1, name: 1})
-		//.populate('comments')
+		.populate('comments')
 	response.json(posts.map(post => post.toJSON()))
 })
 
 postRouter.get('/:id', (request, response, next) => {
-	Post.findById(request.params.id).populate('user', {username: 1, id: 1}).then(result => {
+	Post.findById(request.params.id).populate('user', {username: 1, id: 1}).populate('comments').then(result => {
 		if (result)
 		{
 			response.json(result.toJSON())
@@ -122,7 +122,5 @@ postRouter.put('/:id', async (request, response, next) => {
 		next(e)
 	}
 })
-
-postRouter.use('/:id/comments', commentRouter)
 
 module.exports = postRouter

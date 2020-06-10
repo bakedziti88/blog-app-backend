@@ -25,7 +25,7 @@ commentRouter.get('/:cid', async (request, response, next) => {
 	}
 })
 
-commentRouter.post('/', async (request, response) => {
+commentRouter.post('/', async (request, response, next) => {
 	
 	//TODO: Expand validation
 	if (!request.body.name || !request.body.body) {
@@ -40,12 +40,17 @@ commentRouter.post('/', async (request, response) => {
 		post: request.params.id
 	})
 	
-	const savedComment = await comment.save()
-	
-	parentPost.comments = parentPost.comments.concat(savedComment)
-	await parentPost.save()
-	
-	response.status(201).json({comment})
+	try {
+		const savedComment = await comment.save()
+		
+		parentPost.comments = parentPost.comments.concat(savedComment)
+		await parentPost.save()
+		
+		response.status(201).json({comment})
+	}
+	catch (e) {
+		next(e)
+	}
 })
 
 //TODO implement these functions as you would imagine them
