@@ -92,6 +92,8 @@ postRouter.delete('/:id', async (request, response) => {
 	response.status(204).end()
 })
 
+
+//Designate this route solely for post editng, liking posts will be at a different route, see under this
 postRouter.put('/:id', async (request, response, next) => {
 	const token = request.token
 	
@@ -100,20 +102,15 @@ postRouter.put('/:id', async (request, response, next) => {
 		return response.status(401).json({error: 'unauthorized access'})
 	}
 	
+	const decodedToken = jwt.verify(token, process.env.SECRET)
+	
+	const post = await Post.findById(request.params.id)
+	if (post.user.toString() !== decodedToken.id) {
+		return response.status(401).json({error: 'unauthorized access to edit this post'})
+	}
+	
 	try {
-		const post = await Post.findById(request.params.id)
-		
-		//Mongoose uses "getter" functions for all attributes
-		//Therefore, you need to call toObject() if you actually want to use it in spread operator
-		const updatedPost = {
-			...post.toObject(),
-			...request.body,
-			last_edited: new Date().toISOString()
-		}
-		
-		console.log(updatedPost)
-		
-		const savedPost = await Post.findOneAndReplace({_id: request.params.id}, updatedPost, {new: true})
+		const savedPost = await Post.findOneAndReplace(request.params.id, {title: request.body.title, body: request.body.body}, {new: true})
 		console.log(savedPost)
 		response.status(200).json(savedPost.toJSON())
 	}
@@ -121,6 +118,12 @@ postRouter.put('/:id', async (request, response, next) => {
 		console.log(e.message)
 		next(e)
 	}
+})
+
+postRouter.put('/:id/like', async (request,response, next) => {
+	const post = await Post.findByIdAndUpdate(request.params.id, {likes: request.body.likes}, {new: true})
+		.populate('user', {username: 1, id: 1, name: 1}).populate('comments')
+	response.json(post.toJSON())
 })
 
 module.exports = postRouter
