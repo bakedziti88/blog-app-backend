@@ -37,6 +37,7 @@ const doNothing = (request, response, next) => {
 
 const validatePost = async (request, response, next) => {
 	try {
+		console.log(request.params.id)
 		const post = await Post.findById(request.params.id)
 	}
 	catch(e) {

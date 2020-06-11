@@ -6,8 +6,6 @@ const Comment = require('../models/Comment')
 
 const middleware = require('../utils/middleware')
 
-commentRouter.use(middleware.validatePost)
-
 commentRouter.get('/', async (request, response, next) => {
 	
 	const comments = await Comment.find( {post: request.params.id} )

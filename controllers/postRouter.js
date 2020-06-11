@@ -4,10 +4,12 @@ const commentRouter = require('./commentRouter')
 const jwt = require('jsonwebtoken')
 
 const logger = require('../utils/logger')
+const middleware = require('../utils/middleware')
 
 const Post = require('../models/Post')
 const User = require('../models/User')
 
+postRouter.use('/:id', middleware.validatePost)
 postRouter.use('/:id/comments', commentRouter)
 
 postRouter.get('/', async (request, response) => {
