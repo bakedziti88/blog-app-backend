@@ -107,13 +107,15 @@ postRouter.put('/:id', async (request, response, next) => {
 	const decodedToken = jwt.verify(token, process.env.SECRET)
 	
 	const post = await Post.findById(request.params.id)
+	
 	if (post.user.toString() !== decodedToken.id) {
 		return response.status(401).json({error: 'unauthorized access to edit this post'})
 	}
 	
 	try {
-		const savedPost = await Post.findOneAndReplace(request.params.id, {title: request.body.title, body: request.body.body}, {new: true})
-		console.log(savedPost)
+		
+		const savedPost = await Post.findOneAndUpdate({_id: request.params.id}, {title: request.body.title, body: request.body.body, last_edited: new Date().toISOString()}, {new: true}).populate('user', {username: 1, id: 1, name: 1}).populate('comments')
+		
 		response.status(200).json(savedPost.toJSON())
 	}
 	catch (e) {
